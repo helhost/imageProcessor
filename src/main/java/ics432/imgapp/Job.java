@@ -19,6 +19,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import javafx.application.Platform;
+
 import static javax.imageio.ImageIO.createImageOutputStream;
 
 /**
@@ -28,6 +30,9 @@ import static javax.imageio.ImageIO.createImageOutputStream;
  * the ImgTransform name and an underscore.
  */
 class Job {
+
+    // reference to the job window
+    private JobWindow jobWindow;
 
     private final String filterName;
     private final Path targetDir;
@@ -45,13 +50,15 @@ class Job {
      */
     Job(String filterName,
         Path targetDir,
-        List<Path> inputFiles) {
+        List<Path> inputFiles,
+        JobWindow jobWindow) {
 
         this.filterName = filterName;
         this.targetDir = targetDir;
         this.inputFiles = inputFiles;
 
         this.outcomes = new ArrayList<>();
+        this.jobWindow = jobWindow;
     }
 
     /**
@@ -82,6 +89,10 @@ class Job {
         long totalTimens = endTime - startTime;
 
         System.out.println("Job took " + totalTimens + " ns to complete");
+
+        if (jobWindow != null) {
+            jobWindow.setExecutionTimeLabel(totalTimens);
+        }
     }
 
     /**

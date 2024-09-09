@@ -20,6 +20,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import javafx.application.Platform;
+
+
 /**
  * A class that implements a "Job Window" on which a user
  * can launch a Job
@@ -35,6 +38,9 @@ class JobWindow extends Stage {
     private final Button runButton;
     private final Button closeButton;
     private final ComboBox<String> imgTransformList;
+
+    // The execution time label
+    private Label executionTimeLabel;
 
     /**
      * Constructor
@@ -157,8 +163,8 @@ class JobWindow extends Stage {
         row3.getChildren().add(closeButton);
         layout.getChildren().add(row3);
 
-        // reate the execution time label
-        Label executionTimeLabel = new Label("Execution Time: Not available yet");
+        // set the execution time label
+        executionTimeLabel = new Label("Execution Time: Not available yet");
 
         // Add the label to the layout (under row3)
         layout.getChildren().add(executionTimeLabel);
@@ -171,6 +177,15 @@ class JobWindow extends Stage {
         this.show();
     }
 
+    /** 
+     * Method to set the execution time label
+     */
+
+    public void setExecutionTimeLabel(long timeNs) {
+        Platform.runLater(() -> {
+            this.executionTimeLabel.setText("Execution Time: " + timeNs);
+        });
+    }
     /**
      * Method to add a listener for the "window was closed" event
      *
@@ -203,7 +218,7 @@ class JobWindow extends Stage {
         this.flwvp.clear();
 
         // Create a job
-        Job job = new Job(filterName, this.targetDir, this.inputFiles);
+        Job job = new Job(filterName, this.targetDir, this.inputFiles, this);
 
         // Execute it
         job.execute();

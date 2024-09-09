@@ -157,6 +157,12 @@ class JobWindow extends Stage {
         row3.getChildren().add(closeButton);
         layout.getChildren().add(row3);
 
+        // reate the execution time label
+        Label executionTimeLabel = new Label("Execution Time: Not available yet");
+
+        // Add the label to the layout (under row3)
+        layout.getChildren().add(executionTimeLabel);
+
         Scene scene = new Scene(layout, windowWidth, windowHeight);
 
         // Pop up the new window

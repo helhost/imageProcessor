@@ -1,3 +1,7 @@
+## for my mac
+
+export JAVA_HOME=$HOME/OpenJDK/jdk-21.0.2.jdk/Contents/Home
+
 ## External filters
 
 The `external_filters/c_filters` directory contains C implementations for

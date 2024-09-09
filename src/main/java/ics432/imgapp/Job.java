@@ -59,6 +59,8 @@ class Job {
      */
     void execute() {
 
+        long startTime = System.nanoTime();
+
         // Go through each input file and process it
         for (Path inputFile : inputFiles) {
 
@@ -76,6 +78,10 @@ class Job {
 
         }
 
+        long endTime = System.nanoTime();
+        long totalTimens = endTime - startTime;
+
+        System.out.println("Job took " + totalTimens + " ns to complete");
     }
 
     /**

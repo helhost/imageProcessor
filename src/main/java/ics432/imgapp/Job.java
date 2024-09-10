@@ -54,6 +54,16 @@ class Job {
         return totalWritingTime;
     }
 
+    private volatile boolean isCancelled = false;
+
+    public void cancel() {
+        isCancelled = true;
+    }
+
+    public boolean isCancelled() {
+        return isCancelled;
+    }
+
     /**
      * Constructor
      *
@@ -77,7 +87,10 @@ class Job {
      * udated method to process the next image
     */
     public ImgTransformOutcome processNextImage() {
-        if (inputFiles.isEmpty()) {
+
+        // return if there are no more images to process
+        // deferred cancelation check
+        if (inputFiles.isEmpty() || isCancelled) {
             return null;
         }
 

@@ -295,7 +295,11 @@ class JobWindow extends Stage {
             Platform.runLater(() -> {
 
                 // update the execution time labels
-                this.setExecutionTimeLabel(totalTime, job.getTotalProcessingTime(), job.getTotalWritingTime(), job.getTotalReadingTime());
+                if (job.isCancelled()) {
+                    this.executionTimeLabel.setText("Job Cancelled");
+                } else {
+                    this.setExecutionTimeLabel(totalTime, job.getTotalProcessingTime(), job.getTotalWritingTime(), job.getTotalReadingTime());
+                }
 
                 // Renable the close button
                 this.closeButton.setDisable(false);

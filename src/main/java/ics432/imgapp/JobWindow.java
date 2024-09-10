@@ -20,6 +20,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import javafx.application.Platform;
+
+
 /**
  * A class that implements a "Job Window" on which a user
  * can launch a Job
@@ -35,6 +38,18 @@ class JobWindow extends Stage {
     private final Button runButton;
     private final Button closeButton;
     private final ComboBox<String> imgTransformList;
+
+    // The execution time label
+    private Label executionTimeLabel;
+
+    // The time spent processing the job
+    private Label processingTimeLabel;
+
+    // The time spent writing to disk
+    private Label writingTimeLabel;
+
+    // The time spent reading from disk
+    private Label readingTimeLabel;
 
     /**
      * Constructor
@@ -157,6 +172,20 @@ class JobWindow extends Stage {
         row3.getChildren().add(closeButton);
         layout.getChildren().add(row3);
 
+        // set the execution time labels
+        executionTimeLabel = new Label("");
+        processingTimeLabel = new Label("");
+        writingTimeLabel = new Label("");
+        readingTimeLabel = new Label("");
+
+        // Add the labels to row 4
+        HBox row4 = new HBox(5);
+        row4.getChildren().add(readingTimeLabel);
+        row4.getChildren().add(executionTimeLabel);
+        row4.getChildren().add(processingTimeLabel);
+        row4.getChildren().add(writingTimeLabel);
+        layout.getChildren().add(row4);
+
         Scene scene = new Scene(layout, windowWidth, windowHeight);
 
         // Pop up the new window
@@ -165,6 +194,18 @@ class JobWindow extends Stage {
         this.show();
     }
 
+    /** 
+     * Method to set the execution time label
+     */
+
+    public void setExecutionTimeLabel(long totalTimens, long processingTimens, long writingTimens, long readingTimens) {
+        Platform.runLater(() -> {
+            this.executionTimeLabel.setText("Total Execution Time: " + totalTimens / 1000000 + " ms");
+            this.processingTimeLabel.setText("Processing Time: " + processingTimens / 1000000 + " ms");
+            this.writingTimeLabel.setText("Writing Time: " + writingTimens / 1000000 + " ms");
+            this.readingTimeLabel.setText("Reading Time: " + readingTimens / 1000000 + " ms");
+        });
+    }
     /**
      * Method to add a listener for the "window was closed" event
      *
@@ -197,7 +238,7 @@ class JobWindow extends Stage {
         this.flwvp.clear();
 
         // Create a job
-        Job job = new Job(filterName, this.targetDir, this.inputFiles);
+        Job job = new Job(filterName, this.targetDir, this.inputFiles, this);
 
         // Execute it
         job.execute();

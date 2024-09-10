@@ -19,6 +19,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import javafx.application.Platform;
+
 import static javax.imageio.ImageIO.createImageOutputStream;
 
 /**
@@ -29,12 +31,19 @@ import static javax.imageio.ImageIO.createImageOutputStream;
  */
 class Job {
 
+    // reference to the job window
+    private JobWindow jobWindow;
+
     private final String filterName;
     private final Path targetDir;
     private final List<Path> inputFiles;
 
     // The list of outcomes for each input file
     private final List<ImgTransformOutcome> outcomes;
+
+    private long totalProcessingTime = 0;
+    private long totalReadingTime = 0;
+    private long totalWritingTime = 0;
 
     /**
      * Constructor
@@ -45,19 +54,23 @@ class Job {
      */
     Job(String filterName,
         Path targetDir,
-        List<Path> inputFiles) {
+        List<Path> inputFiles,
+        JobWindow jobWindow) {
 
         this.filterName = filterName;
         this.targetDir = targetDir;
         this.inputFiles = inputFiles;
 
         this.outcomes = new ArrayList<>();
+        this.jobWindow = jobWindow;
     }
 
     /**
      * Method to execute the imgTransform job
      */
     void execute() {
+
+        long startTime = System.nanoTime();
 
         // Go through each input file and process it
         for (Path inputFile : inputFiles) {
@@ -76,6 +89,12 @@ class Job {
 
         }
 
+        long endTime = System.nanoTime();
+        long totalTimens = endTime - startTime;
+
+        if (jobWindow != null) {
+            jobWindow.setExecutionTimeLabel(totalTimens, totalProcessingTime, totalWritingTime, totalReadingTime);
+        }
     }
 
     /**
@@ -97,6 +116,8 @@ class Job {
     private Path processInputFile(Path inputFile) throws IOException {
 
         // Load the image from file
+        long startReadingTime = System.nanoTime();
+
         Image image;
         try {
             image = new Image(inputFile.toUri().toURL().toString());
@@ -108,13 +129,23 @@ class Job {
             throw new IOException("Error while reading from " + inputFile.toAbsolutePath());
         }
 
+        long endReadingTime = System.nanoTime();
+        this.totalReadingTime += endReadingTime - startReadingTime;
+
         // Create the filter
         BufferedImageOp filter = createFilter(filterName);
 
         // Process the image
+        long startProcessingTime = System.nanoTime();
+
         BufferedImage img = filter.filter(SwingFXUtils.fromFXImage(image, null), null);
 
+        long endProcessingTime = System.nanoTime();
+        this.totalProcessingTime += endProcessingTime - startProcessingTime;
+
         // Write the image back to a file
+        long startWritingTime = System.nanoTime();
+
         String outputPath = this.targetDir + FileSystems.getDefault().getSeparator() + this.filterName + "_" + inputFile.getFileName();
         try {
             OutputStream os = new FileOutputStream(outputPath);
@@ -123,6 +154,9 @@ class Job {
         } catch (IOException | NullPointerException e) {
             throw new IOException("Error while writing to " + outputPath);
         }
+
+        long endWritingTime = System.nanoTime();
+        this.totalWritingTime += endWritingTime - startWritingTime;
 
         // Success!
         return Paths.get(outputPath);

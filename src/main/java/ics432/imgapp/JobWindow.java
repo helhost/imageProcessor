@@ -42,6 +42,15 @@ class JobWindow extends Stage {
     // The execution time label
     private Label executionTimeLabel;
 
+    // The time spent processing the job
+    private Label processingTimeLabel;
+
+    // The time spent writing to disk
+    private Label writingTimeLabel;
+
+    // The time spent reading from disk
+    private Label readingTimeLabel;
+
     /**
      * Constructor
      *
@@ -163,11 +172,19 @@ class JobWindow extends Stage {
         row3.getChildren().add(closeButton);
         layout.getChildren().add(row3);
 
-        // set the execution time label
-        executionTimeLabel = new Label("Execution Time: Not available yet");
+        // set the execution time labels
+        executionTimeLabel = new Label("");
+        processingTimeLabel = new Label("");
+        writingTimeLabel = new Label("");
+        readingTimeLabel = new Label("");
 
-        // Add the label to the layout (under row3)
-        layout.getChildren().add(executionTimeLabel);
+        // Add the labels to row 4
+        HBox row4 = new HBox(5);
+        row4.getChildren().add(readingTimeLabel);
+        row4.getChildren().add(executionTimeLabel);
+        row4.getChildren().add(processingTimeLabel);
+        row4.getChildren().add(writingTimeLabel);
+        layout.getChildren().add(row4);
 
         Scene scene = new Scene(layout, windowWidth, windowHeight);
 
@@ -181,9 +198,12 @@ class JobWindow extends Stage {
      * Method to set the execution time label
      */
 
-    public void setExecutionTimeLabel(long timeNs) {
+    public void setExecutionTimeLabel(long totalTimens, long processingTimens, long writingTimens, long readingTimens) {
         Platform.runLater(() -> {
-            this.executionTimeLabel.setText("Execution Time: " + timeNs);
+            this.executionTimeLabel.setText("Total Execution Time: " + totalTimens / 1000000 + " ms");
+            this.processingTimeLabel.setText("Processing Time: " + processingTimens / 1000000 + " ms");
+            this.writingTimeLabel.setText("Writing Time: " + writingTimens / 1000000 + " ms");
+            this.readingTimeLabel.setText("Reading Time: " + readingTimens / 1000000 + " ms");
         });
     }
     /**

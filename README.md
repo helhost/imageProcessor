@@ -10,3 +10,6 @@ The application is structured as a Maven project, with all source code in the
 The `external_filters` directory contains additional image filters, not necessarily implemented in Java, 
 which will be relevant for later programming assignment. See `README` file within for details.
 
+## for my mac
+
+export JAVA_HOME=$HOME/OpenJDK/jdk-21.0.2.jdk/Contents/Home

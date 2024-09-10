@@ -41,6 +41,10 @@ class Job {
     // The list of outcomes for each input file
     private final List<ImgTransformOutcome> outcomes;
 
+    private long totalProcessingTime = 0;
+    private long totalReadingTime = 0;
+    private long totalWritingTime = 0;
+
     /**
      * Constructor
      *
@@ -88,10 +92,8 @@ class Job {
         long endTime = System.nanoTime();
         long totalTimens = endTime - startTime;
 
-        System.out.println("Job took " + totalTimens + " ns to complete");
-
         if (jobWindow != null) {
-            jobWindow.setExecutionTimeLabel(totalTimens);
+            jobWindow.setExecutionTimeLabel(totalTimens, totalProcessingTime, totalWritingTime, totalReadingTime);
         }
     }
 
@@ -114,6 +116,8 @@ class Job {
     private Path processInputFile(Path inputFile) throws IOException {
 
         // Load the image from file
+        long startReadingTime = System.nanoTime();
+
         Image image;
         try {
             image = new Image(inputFile.toUri().toURL().toString());
@@ -125,13 +129,23 @@ class Job {
             throw new IOException("Error while reading from " + inputFile.toAbsolutePath());
         }
 
+        long endReadingTime = System.nanoTime();
+        this.totalReadingTime += endReadingTime - startReadingTime;
+
         // Create the filter
         BufferedImageOp filter = createFilter(filterName);
 
         // Process the image
+        long startProcessingTime = System.nanoTime();
+
         BufferedImage img = filter.filter(SwingFXUtils.fromFXImage(image, null), null);
 
+        long endProcessingTime = System.nanoTime();
+        this.totalProcessingTime += endProcessingTime - startProcessingTime;
+
         // Write the image back to a file
+        long startWritingTime = System.nanoTime();
+
         String outputPath = this.targetDir + FileSystems.getDefault().getSeparator() + this.filterName + "_" + inputFile.getFileName();
         try {
             OutputStream os = new FileOutputStream(outputPath);
@@ -140,6 +154,9 @@ class Job {
         } catch (IOException | NullPointerException e) {
             throw new IOException("Error while writing to " + outputPath);
         }
+
+        long endWritingTime = System.nanoTime();
+        this.totalWritingTime += endWritingTime - startWritingTime;
 
         // Success!
         return Paths.get(outputPath);

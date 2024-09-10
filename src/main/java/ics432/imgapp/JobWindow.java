@@ -240,11 +240,17 @@ class JobWindow extends Stage {
         // Create a job
         Job job = new Job(filterName, this.targetDir, this.inputFiles, this);
 
-        // start the job timer
-        long startTime = System.nanoTime();
 
         // create a thread that runs the job
         new Thread(() -> {
+
+            // start the job timer
+            long startTime = System.nanoTime();
+
+            // disable the close button
+            Platform.runLater(() -> {
+                this.closeButton.setDisable(true);
+            });
             
             StringBuilder errorMessage = new StringBuilder();
 
@@ -274,6 +280,9 @@ class JobWindow extends Stage {
 
                 // update the execution time labels
                 this.setExecutionTimeLabel(totalTime, job.getTotalProcessingTime(), job.getTotalWritingTime(), job.getTotalReadingTime());
+
+                // Renable the close button
+                this.closeButton.setDisable(false);
 
                 // Display any errors after the job is complete
                 if (!errorMessage.toString().isEmpty()) {

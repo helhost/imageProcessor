@@ -37,6 +37,7 @@ class JobWindow extends Stage {
     private final TextField targetDirTextField;
     private final Button runButton;
     private final Button closeButton;
+    private final Button cancelButton;
     private final ComboBox<String> imgTransformList;
 
     // The execution time label
@@ -128,6 +129,12 @@ class JobWindow extends Stage {
         this.closeButton.setId("closeButton");
         this.closeButton.setPrefHeight(buttonPreferredHeight);
 
+        // Create a "Cancel" button
+        this.cancelButton = new Button("Cancel");
+        this.cancelButton.setId("cancelButton");
+        this.cancelButton.setPrefHeight(buttonPreferredHeight);
+        this.cancelButton.setDisable(true);
+
         // Set actions for all widgets
         this.changeDirButton.setOnAction(e -> {
             DirectoryChooser dirChooser = new DirectoryChooser();
@@ -170,6 +177,7 @@ class JobWindow extends Stage {
         HBox row3 = new HBox(5);
         row3.getChildren().add(runButton);
         row3.getChildren().add(closeButton);
+        row3.getChildren().add(cancelButton);
         layout.getChildren().add(row3);
 
         // set the execution time labels
@@ -240,6 +248,12 @@ class JobWindow extends Stage {
         // Create a job
         Job job = new Job(filterName, this.targetDir, this.inputFiles, this);
 
+        this.cancelButton.setDisable(false);
+
+        this.cancelButton.setOnAction(e -> {
+            job.cancel();
+        });
+
 
         // create a thread that runs the job
         new Thread(() -> {
@@ -272,6 +286,8 @@ class JobWindow extends Stage {
                 });
             }
 
+            this.cancelButton.setDisable(true);
+
             // stop the job timer
             long endTime = System.nanoTime();
             long totalTime = endTime - startTime;
@@ -279,7 +295,11 @@ class JobWindow extends Stage {
             Platform.runLater(() -> {
 
                 // update the execution time labels
-                this.setExecutionTimeLabel(totalTime, job.getTotalProcessingTime(), job.getTotalWritingTime(), job.getTotalReadingTime());
+                if (job.isCancelled()) {
+                    this.executionTimeLabel.setText("Job Cancelled");
+                } else {
+                    this.setExecutionTimeLabel(totalTime, job.getTotalProcessingTime(), job.getTotalWritingTime(), job.getTotalReadingTime());
+                }
 
                 // Renable the close button
                 this.closeButton.setDisable(false);

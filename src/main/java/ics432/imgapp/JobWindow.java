@@ -240,31 +240,62 @@ class JobWindow extends Stage {
         // Create a job
         Job job = new Job(filterName, this.targetDir, this.inputFiles, this);
 
-        // Execute it
-        job.execute();
 
-        // Process the outcome
-        List<Path> toAddToDisplay = new ArrayList<>();
+        // create a thread that runs the job
+        new Thread(() -> {
 
-        StringBuilder errorMessage = new StringBuilder();
-        for (Job.ImgTransformOutcome o : job.getOutcomes()) {
-            if (o.success) {
-                toAddToDisplay.add(o.outputFile);
-            } else {
-                errorMessage.append(o.inputFile.toAbsolutePath()).append(": ").append(o.error.getMessage()).append("\n");
+            // start the job timer
+            long startTime = System.nanoTime();
+
+            // disable the close button
+            Platform.runLater(() -> {
+                this.closeButton.setDisable(true);
+            });
+            
+            StringBuilder errorMessage = new StringBuilder();
+
+            Job.ImgTransformOutcome outcome; // The outcome of processing an image
+
+            // Process the images
+            while ((outcome = job.processNextImage()) != null) {
+                Job.ImgTransformOutcome finalOutcome = outcome;
+
+                // Update the viewport
+                Platform.runLater(() -> {
+                    if (finalOutcome.success) {
+                        // Add the output file to the viewport
+                        this.flwvp.addFile(finalOutcome.outputFile); 
+                    } else {
+                        // Append the error message to the error message string
+                        errorMessage.append(finalOutcome.inputFile.toAbsolutePath()).append(": ").append(finalOutcome.error.getMessage()).append("\n");
+                    }
+                });
             }
-        }
 
-        // Pop up error dialog if needed
-        if (!errorMessage.toString().isEmpty()) {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("ImgTransform Job Error");
-            alert.setHeaderText(null);
-            alert.setContentText(errorMessage.toString());
-            alert.showAndWait();
-        }
+            // stop the job timer
+            long endTime = System.nanoTime();
+            long totalTime = endTime - startTime;
 
-        // Update the viewport
-        this.flwvp.addFiles(toAddToDisplay);
+            Platform.runLater(() -> {
+
+                // update the execution time labels
+                this.setExecutionTimeLabel(totalTime, job.getTotalProcessingTime(), job.getTotalWritingTime(), job.getTotalReadingTime());
+
+                // Renable the close button
+                this.closeButton.setDisable(false);
+
+                // Display any errors after the job is complete
+                if (!errorMessage.toString().isEmpty()) {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("ImgTransform Job Error");
+                    alert.setHeaderText(null);
+                    alert.setContentText(errorMessage.toString());
+                    alert.showAndWait();
+                }
+            });
+
+
+        }).start();
+
     }
 }

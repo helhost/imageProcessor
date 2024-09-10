@@ -38,12 +38,21 @@ class Job {
     private final Path targetDir;
     private final List<Path> inputFiles;
 
-    // The list of outcomes for each input file
-    private final List<ImgTransformOutcome> outcomes;
-
     private long totalProcessingTime = 0;
     private long totalReadingTime = 0;
     private long totalWritingTime = 0;
+
+    public long getTotalProcessingTime() {
+        return totalProcessingTime;
+    }
+
+    public long getTotalReadingTime() {
+        return totalReadingTime;
+    }
+
+    public long getTotalWritingTime() {
+        return totalWritingTime;
+    }
 
     /**
      * Constructor
@@ -61,50 +70,31 @@ class Job {
         this.targetDir = targetDir;
         this.inputFiles = inputFiles;
 
-        this.outcomes = new ArrayList<>();
         this.jobWindow = jobWindow;
     }
 
-    /**
-     * Method to execute the imgTransform job
-     */
-    void execute() {
-
-        long startTime = System.nanoTime();
-
-        // Go through each input file and process it
-        for (Path inputFile : inputFiles) {
-
-            System.err.println("Applying " + this.filterName + " to " + inputFile.toAbsolutePath() + " ...");
-
-            Path outputFile;
-            try {
-                outputFile = processInputFile(inputFile);
-                // Generate a "success" outcome
-                this.outcomes.add(new ImgTransformOutcome(true, inputFile, outputFile, null));
-            } catch (IOException e) {
-                // Generate a "failure" outcome
-                this.outcomes.add(new ImgTransformOutcome(false, inputFile, null, e));
-            }
-
+    /** 
+     * udated method to process the next image
+    */
+    public ImgTransformOutcome processNextImage() {
+        if (inputFiles.isEmpty()) {
+            return null;
         }
 
-        long endTime = System.nanoTime();
-        long totalTimens = endTime - startTime;
+        Path inputFile = inputFiles.remove(0);
+        Path outputFile;
+        ImgTransformOutcome outcome;
 
-        if (jobWindow != null) {
-            jobWindow.setExecutionTimeLabel(totalTimens, totalProcessingTime, totalWritingTime, totalReadingTime);
+        try {
+            outputFile = processInputFile(inputFile);
+            // Generate a "success" outcome
+            outcome = new ImgTransformOutcome(true, inputFile, outputFile, null);
+        } catch (IOException e) {
+            // Generate a "failure" outcome
+            outcome = new ImgTransformOutcome(false, inputFile, null, e);
         }
-    }
 
-    /**
-     * Getter for job outcomes
-     *
-     * @return The job outcomes, i.e., a list of ImgTransformOutcome objects
-     * (in flux if the job isn't done executing)
-     */
-    List<ImgTransformOutcome> getOutcomes() {
-        return this.outcomes;
+        return outcome;
     }
 
     /**

@@ -213,6 +213,16 @@ class FileListWithViewPort extends HBox {
     }
 
     /**
+     * Helper method to add a single file path to the ListView
+     */
+    public void addFile(Path file) {
+        if (file == null) return; // If null is passed in, do nothing
+        
+        // Reuse the addFiles() method by passing a single-element list
+        addFiles(List.of(file));
+    }
+
+    /**
      * Retrieve the list of file paths selected by the user
      *
      * @return The list of selected file paths

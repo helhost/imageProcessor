@@ -40,17 +40,8 @@ class JobWindow extends Stage {
     private final Button cancelButton;
     private final ComboBox<String> imgTransformList;
 
-    // The execution time label
-    private Label executionTimeLabel;
-
-    // The time spent processing the job
-    private Label processingTimeLabel;
-
-    // The time spent writing to disk
-    private Label writingTimeLabel;
-
-    // The time spent reading from disk
-    private Label readingTimeLabel;
+    // Label used to display metrics
+    private Label metricsLabel;
 
     /**
      * Constructor
@@ -180,18 +171,12 @@ class JobWindow extends Stage {
         row3.getChildren().add(cancelButton);
         layout.getChildren().add(row3);
 
-        // set the execution time labels
-        executionTimeLabel = new Label("");
-        processingTimeLabel = new Label("");
-        writingTimeLabel = new Label("");
-        readingTimeLabel = new Label("");
+        // set the metrics label
+        metricsLabel = new Label("");
 
-        // Add the labels to row 4
+        // Add the label to row 4
         HBox row4 = new HBox(5);
-        row4.getChildren().add(readingTimeLabel);
-        row4.getChildren().add(executionTimeLabel);
-        row4.getChildren().add(processingTimeLabel);
-        row4.getChildren().add(writingTimeLabel);
+        row4.getChildren().add(metricsLabel);
         layout.getChildren().add(row4);
 
         Scene scene = new Scene(layout, windowWidth, windowHeight);
@@ -203,15 +188,15 @@ class JobWindow extends Stage {
     }
 
     /** 
-     * Method to set the execution time label
+     * Method to set the metricsLabel
      */
-
-    public void setExecutionTimeLabel(long totalTimens, long processingTimens, long writingTimens, long readingTimens) {
+    public void setMetricsLabel(long totalTimens, long processingTimens, long writingTimens, long readingTimens) {
         Platform.runLater(() -> {
-            this.executionTimeLabel.setText("Total Execution Time: " + totalTimens / 1000000 + " ms");
-            this.processingTimeLabel.setText("Processing Time: " + processingTimens / 1000000 + " ms");
-            this.writingTimeLabel.setText("Writing Time: " + writingTimens / 1000000 + " ms");
-            this.readingTimeLabel.setText("Reading Time: " + readingTimens / 1000000 + " ms");
+            this.metricsLabel.setText(
+                "Total Execution Time: " + totalTimens / 1000000 + " ms" + 
+                " Processing Time: " + processingTimens / 1000000 + " ms" +
+                " Writing Time: " + writingTimens / 1000000 + " ms" + 
+                " Reading Time: " + readingTimens / 1000000 + " ms");
         });
     }
     /**
@@ -296,9 +281,9 @@ class JobWindow extends Stage {
 
                 // update the execution time labels
                 if (job.isCancelled()) {
-                    this.executionTimeLabel.setText("Job Cancelled");
+                    this.metricsLabel.setText("Job Cancelled");
                 } else {
-                    this.setExecutionTimeLabel(totalTime, job.getTotalProcessingTime(), job.getTotalWritingTime(), job.getTotalReadingTime());
+                    this.setMetricsLabel(totalTime, job.getTotalProcessingTime(), job.getTotalWritingTime(), job.getTotalReadingTime());
                 }
 
                 // Renable the close button

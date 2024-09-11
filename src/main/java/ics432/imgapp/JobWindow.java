@@ -39,6 +39,8 @@ class JobWindow extends Stage {
     private final Button closeButton;
     private final Button cancelButton;
     private final ComboBox<String> imgTransformList;
+    private long imagesProcessed = 0;  
+    private final long amountOfImages;
 
     // Label used to display metrics
     private Label metricsLabel;
@@ -61,7 +63,7 @@ class JobWindow extends Stage {
         // Set up instance variables
         targetDir = Paths.get(inputFiles.getFirst().getParent().toString()); // Same dir as input images
         this.inputFiles = inputFiles;
-
+        this.amountOfImages = inputFiles.size();
 
         // Set up the window
         this.setX(X);
@@ -259,6 +261,8 @@ class JobWindow extends Stage {
             while ((outcome = job.processNextImage()) != null) {
                 Job.ImgTransformOutcome finalOutcome = outcome;
 
+                this.imagesProcessed++; // Increment the number of images processed
+
                 // Update the viewport
                 Platform.runLater(() -> {
                     if (finalOutcome.success) {
@@ -268,6 +272,9 @@ class JobWindow extends Stage {
                         // Append the error message to the error message string
                         errorMessage.append(finalOutcome.inputFile.toAbsolutePath()).append(": ").append(finalOutcome.error.getMessage()).append("\n");
                     }
+
+                    // Update the metrics label to show the number of images processed
+                    this.metricsLabel.setText("Images Processed: " + imagesProcessed + " / " + this.amountOfImages);
                 });
             }
 

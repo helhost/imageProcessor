@@ -2,6 +2,7 @@ package ics432.imgapp;
 
 import javafx.collections.FXCollections;
 import javafx.event.Event;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -10,6 +11,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.control.ProgressBar;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
@@ -21,7 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javafx.application.Platform;
-
 
 /**
  * A class that implements a "Job Window" on which a user
@@ -39,8 +40,9 @@ class JobWindow extends Stage {
     private final Button closeButton;
     private final Button cancelButton;
     private final ComboBox<String> imgTransformList;
-    private long imagesProcessed = 0;  
+    private long imagesProcessed = 0;
     private final long amountOfImages;
+    private final ProgressBar progressBar = new ProgressBar(0);
 
     // Label used to display metrics
     private Label metricsLabel;
@@ -57,7 +59,7 @@ class JobWindow extends Stage {
      */
     JobWindow(int windowWidth, int windowHeight, double X, double Y, int id, List<Path> inputFiles) {
 
-        // The  preferred height of buttons
+        // The preferred height of buttons
         double buttonPreferredHeight = 27.0;
 
         // Set up instance variables
@@ -78,7 +80,7 @@ class JobWindow extends Stage {
         Label targetDirLabel = new Label("Target Directory:");
         targetDirLabel.setPrefWidth(115);
 
-        // Create a "change target directory"  button
+        // Create a "change target directory" button
         this.changeDirButton = new Button("");
         this.changeDirButton.setId("changeDirButton");
         this.changeDirButton.setPrefHeight(buttonPreferredHeight);
@@ -88,7 +90,7 @@ class JobWindow extends Stage {
         imageView.setFitHeight(10);
         this.changeDirButton.setGraphic(imageView);
 
-        // Create a "target directory"  text field
+        // Create a "target directory" text field
         this.targetDirTextField = new TextField(this.targetDir.toString());
         this.targetDirTextField.setDisable(true);
         HBox.setHgrow(targetDirTextField, Priority.ALWAYS);
@@ -97,24 +99,25 @@ class JobWindow extends Stage {
         Label transformLabel = new Label("Transformation: ");
         transformLabel.setPrefWidth(115);
 
-        //  Create the pull-down list of image transforms
+        // Create the pull-down list of image transforms
         this.imgTransformList = new ComboBox<>();
-        this.imgTransformList.setId("imgTransformList");  // For TestFX
+        this.imgTransformList.setId("imgTransformList"); // For TestFX
         this.imgTransformList.setItems(FXCollections.observableArrayList(
                 "Invert",
                 "Solarize",
-                "Oil4"
-        ));
+                "Oil4"));
 
-        this.imgTransformList.getSelectionModel().selectFirst();  //Chooses first imgTransform as default
+        this.imgTransformList.getSelectionModel().selectFirst(); // Chooses first imgTransform as default
 
         // Create a "Run" button
-        this.runButton = new Button("Run job (on " + inputFiles.size() + " image" + (inputFiles.size() == 1 ? "" : "s") + ")");
+        this.runButton = new Button(
+                "Run job (on " + inputFiles.size() + " image" + (inputFiles.size() == 1 ? "" : "s") + ")");
         this.runButton.setId("runJobButton");
         this.runButton.setPrefHeight(buttonPreferredHeight);
 
         // Create the FileListWithViewPort display
-        this.flwvp = new FileListWithViewPort(windowWidth * 0.98, windowHeight - 4 * buttonPreferredHeight - 3 * 5, false);
+        this.flwvp = new FileListWithViewPort(windowWidth * 0.98, windowHeight - 4 * buttonPreferredHeight - 3 * 5,
+                false);
         this.flwvp.addFiles(inputFiles);
 
         // Create a "Close" button
@@ -176,9 +179,13 @@ class JobWindow extends Stage {
         // set the metrics label
         metricsLabel = new Label("");
 
+        // initialize the progress bar to be invisible
+        progressBar.setVisible(false);
+
         // Add the label to row 4
         HBox row4 = new HBox(5);
         row4.getChildren().add(metricsLabel);
+        row4.getChildren().add(progressBar);
         layout.getChildren().add(row4);
 
         Scene scene = new Scene(layout, windowWidth, windowHeight);
@@ -189,18 +196,19 @@ class JobWindow extends Stage {
         this.show();
     }
 
-    /** 
+    /**
      * Method to set the metricsLabel
      */
     public void setMetricsLabel(long totalTimens, long processingTimens, long writingTimens, long readingTimens) {
         Platform.runLater(() -> {
             this.metricsLabel.setText(
-                "Total Execution Time: " + totalTimens / 1000000 + " ms" + 
-                " Processing Time: " + processingTimens / 1000000 + " ms" +
-                " Writing Time: " + writingTimens / 1000000 + " ms" + 
-                " Reading Time: " + readingTimens / 1000000 + " ms");
+                    "Total Execution Time: " + totalTimens / 1000000 + " ms" +
+                            " Processing Time: " + processingTimens / 1000000 + " ms" +
+                            " Writing Time: " + writingTimens / 1000000 + " ms" +
+                            " Reading Time: " + readingTimens / 1000000 + " ms");
         });
     }
+
     /**
      * Method to add a listener for the "window was closed" event
      *
@@ -241,9 +249,11 @@ class JobWindow extends Stage {
             job.cancel();
         });
 
-
         // create a thread that runs the job
         new Thread(() -> {
+
+            // make the progress bar visible
+            this.progressBar.setVisible(true);
 
             // start the job timer
             long startTime = System.nanoTime();
@@ -252,7 +262,7 @@ class JobWindow extends Stage {
             Platform.runLater(() -> {
                 this.closeButton.setDisable(true);
             });
-            
+
             StringBuilder errorMessage = new StringBuilder();
 
             Job.ImgTransformOutcome outcome; // The outcome of processing an image
@@ -267,18 +277,23 @@ class JobWindow extends Stage {
                 Platform.runLater(() -> {
                     if (finalOutcome.success) {
                         // Add the output file to the viewport
-                        this.flwvp.addFile(finalOutcome.outputFile); 
+                        this.flwvp.addFile(finalOutcome.outputFile);
                     } else {
                         // Append the error message to the error message string
-                        errorMessage.append(finalOutcome.inputFile.toAbsolutePath()).append(": ").append(finalOutcome.error.getMessage()).append("\n");
+                        errorMessage.append(finalOutcome.inputFile.toAbsolutePath()).append(": ")
+                                .append(finalOutcome.error.getMessage()).append("\n");
                     }
 
                     // Update the metrics label to show the number of images processed
-                    this.metricsLabel.setText("Images Processed: " + imagesProcessed + " / " + this.amountOfImages);
+                    this.progressBar.setProgress((double) this.imagesProcessed / this.amountOfImages);
                 });
             }
 
             this.cancelButton.setDisable(true);
+
+            // hide and reset the progress bar
+            this.progressBar.setVisible(false);
+            this.progressBar.setProgress(0);
 
             // stop the job timer
             long endTime = System.nanoTime();
@@ -290,7 +305,8 @@ class JobWindow extends Stage {
                 if (job.isCancelled()) {
                     this.metricsLabel.setText("Job Cancelled");
                 } else {
-                    this.setMetricsLabel(totalTime, job.getTotalProcessingTime(), job.getTotalWritingTime(), job.getTotalReadingTime());
+                    this.setMetricsLabel(totalTime, job.getTotalProcessingTime(), job.getTotalWritingTime(),
+                            job.getTotalReadingTime());
                 }
 
                 // Renable the close button
@@ -305,7 +321,6 @@ class JobWindow extends Stage {
                     alert.showAndWait();
                 }
             });
-
 
         }).start();
 

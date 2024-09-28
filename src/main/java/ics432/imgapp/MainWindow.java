@@ -24,6 +24,7 @@ class MainWindow {
 
     private final Stage primaryStage;
     private final Button quitButton;
+    private final Button statisticsButton;
     private int pendingJobCount = 0;
     private final FileListWithViewPort fileListWithViewPort;
     private int jobID = 0;
@@ -52,6 +53,9 @@ class MainWindow {
         createJobButton.setPrefHeight(buttonPreferredHeight);
         createJobButton.setDisable(true);
 
+        this.statisticsButton = new Button("Statistics");
+        this.statisticsButton.setPrefHeight(buttonPreferredHeight);
+
         quitButton = new Button("Quit");
         quitButton.setPrefHeight(buttonPreferredHeight);
 
@@ -66,6 +70,18 @@ class MainWindow {
 
         // Set actions for all widgets
         addFilesButton.setOnAction(e -> addFiles(selectFilesWithChooser()));
+
+        statisticsButton.setOnAction(e -> {
+            this.quitButton.setDisable(true);
+            this.statisticsButton.setDisable(true);
+            StatisticsWindow sw = new StatisticsWindow(
+                    new Stage(), (int) (windowWidth * 0.5), (int) (windowHeight * 0.5));
+
+            sw.addCloseListener(() -> {
+                this.quitButton.setDisable(false);
+                this.statisticsButton.setDisable(false);
+            });
+        });
 
         quitButton.setOnAction(e -> {
             // If the button is enabled, it's fine to quit
@@ -91,7 +107,7 @@ class MainWindow {
             });
         });
 
-        //Construct the layout
+        // Construct the layout
         VBox layout = new VBox(5);
 
         layout.getChildren().add(addFilesButton);
@@ -100,6 +116,7 @@ class MainWindow {
         HBox row = new HBox(5);
         row.getChildren().add(createJobButton);
         row.getChildren().add(quitButton);
+        row.getChildren().add(statisticsButton);
         layout.getChildren().add(row);
 
         Scene scene = new Scene(layout, windowWidth, windowHeight);
@@ -109,10 +126,9 @@ class MainWindow {
         // Make this primaryStage non-closable
         this.primaryStage.setOnCloseRequest(Event::consume);
 
-        //  Show it on  screen.
+        // Show it on screen.
         this.primaryStage.show();
     }
-
 
     /**
      * Method that pops up a file chooser and returns chosen image files
